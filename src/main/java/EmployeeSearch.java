@@ -1,7 +1,10 @@
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 import java.io.IOException;
@@ -20,13 +23,21 @@ public class EmployeeSearch {
                 .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("localhost"), 9300));
 
         prepareData(client);
+        executeSearch(client);
         client.close();
     }
 
     private static void executeSearch(TransportClient client) {
-        client.prepareSearch("company")
+        SearchResponse response = client.prepareSearch("company")
                 .setTypes("employee")
-                .setQuery()
+                .setQuery(QueryBuilders.matchQuery("position", "technique"))
+                .setPostFilter(QueryBuilders.rangeQuery("age").from(0).to(40))
+                .setFrom(0).setSize(1)
+                .get();
+        SearchHit[] searchHits = response.getHits().getHits();
+        for (int i = 0; i < searchHits.length; i++) {
+            System.out.println(searchHits[i].getSourceAsString());
+        }
 
     }
 
